@@ -8,12 +8,12 @@ app.get('/', function (req, res) {
 });  
 
 app.get('/hello', function (req, res){
-  var name = req.query.name;
+  var name = req.query.nom;
 
   if(name != null && name != ''){
-    res.send('Hello ' + name + ' !');
+    res.send('Bonjour, ' + name + ' !');
   }else{
-    res.send('Hey Stranger ;)');
+    res.send('Quel est votre nom ?');
   }
 
 });
