@@ -48,8 +48,8 @@ $ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"dema
 $ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"demain\"}" http://localhost:3000/chat
 # retourne "demain: Mercredi"
 ```
-```
 * Récupérer une information non stockée
+```
 $ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"demain\"}" http://localhost:3000/chat
 # retourne "Je ne connais pas demain…"
 ```
