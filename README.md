@@ -2,13 +2,15 @@
 
 Ce dépot contient un serveur web / API en Node.js.
 
-Ce serveur renvoie "Hello World !" quand on envoie une requête HTTP GET à la racine
+1. /racine
+Ce serveur renvoie "Hello World !" quand on envoie une requête HTTP GET à la racine.
 
-Ce serveur renvoie "Quel est votre nom ?" quand on envoie une requête HTTP GET à "/hello" 
-Ce serveur renvoie "Bonjour, nom !" quand on envoie une requête HTTP GET à "/hello?nom=nom"
+2. /hello
+Ce serveur renvoie "Quel est votre nom ?" quand on envoie une requête HTTP GET à "/hello".
+Ce serveur renvoie "Bonjour, nom !" quand on envoie une requête HTTP GET à "/hello?nom=nom".
 
-Ce serveur renvoie "Nous sommes à Paris" quand on envoie une requête HTTP POST à /chat : { "msg" : "ville" }
-Ce serveur renvoie "Il fait beau" quand on envoie une requête HTTP POST à /chat : { "msg" : "meteo" }
+3. /chat
+Ce serveur renvoie une réponse en fonction de la valeur de la propriété "msg" passée au format JSON quand on envoie un requête HTTP POST à "/chat".
 
 
 ## Installation et execution
@@ -21,10 +23,12 @@ $ npm start # pour éxecuter le serveur
 ```
 
 ## Comment tester le serveur
+1. /racine
 ```
 $ curl http://localhost:3000/ 
 # retourne "Hello World !"
 ```
+2. /hello
 ```
 $ curl http://localhost:3000/hello 
 # retourne "Quel est votre nom ?"
@@ -33,11 +37,20 @@ $ curl http://localhost:3000/hello
 $ curl http://localhost:3000/hello?nom=nom
 # retourne "Bonjour, nom !"
 ```
+3. /chat
+Ajouter une information
 ```
-$ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"ville\"}" http://localhost:3000/chat
-# retourne "Nous sommes à Paris"
+$ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"demain = Mercredi\"}" http://localhost:3000/chat
+# retourne "Merci pour cette information !"
 ```
+Récupérer une information : 
+- Cas 1 l'information recherchée est stockée
 ```
-$ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"meteo\"}" http://localhost:3000/chat
-# retourne "Il fait beau"
+$ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"demain\"}" http://localhost:3000/chat
+# retourne "demain: Mercredi"
+```
+- Cas 2 : l'information recherchée n'est pas stockée 
+```
+$ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"demain\"}" http://localhost:3000/chat
+# retourne "Je ne connais pas demain…"
 ```

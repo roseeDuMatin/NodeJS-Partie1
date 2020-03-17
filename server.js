@@ -1,8 +1,12 @@
 const express = require('express') ;
-const app = express() ;
-const port = process.env.PORT || 3000;
+const fs = require('fs');
 //const bodyParser = require('body-parser');
 
+const app = express() ;
+const port = process.env.PORT || 3000;
+
+
+// Middleware
 //app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -21,26 +25,40 @@ app.get('/hello', function (req, res){
 
 });
 
+app.get('/chat', function(req, res){
+  var data = fs.readFileSync('réponses.json', 'utf8');
+  var json = JSON.parse(data);
+  var msg = json.msg;
+  res.send(msg);
+})
+
 app.post('/chat', function (req, res){
-  var json = req.body;
+  var JSONmsg = req.body;
+  console.log(JSONmsg);
 
-  var msg = decodeURI(json["msg"]);
-  var string = "";
+  var msg = JSONmsg["msg"];
+  var splitMsg = msg.split(" = ");
+  var newMsg = splitMsg.length == 2;
+  var property = splitMsg[0];
+  var value = splitMsg[1];
+  
+  var JSONreponses = fs.readFileSync('réponses.json', 'utf8');
+  var reponses = JSON.parse(JSONreponses);
 
-  switch(msg){
-    case "ville":
-      string = 'Nous sommes à Paris';
-      break;
-    case "meteo":
-      string = 'Il fait beau';
-      break;
-    case "météo":
-      string = 'ACCENTS';
-      break;
+  var msgExist = reponses[property] != null;
+  if(msgExist){
+    res.send(property + ': ' + reponses[property]);
   }
-
-  res.send(string);
-
+  if(!msgExist && !newMsg){
+    res.send('Je ne connais pas ' + property + '...')
+  }
+  if(newMsg){
+    reponses[property] = value;
+    console.log(reponses);
+    var strReponses = JSON.stringify(reponses);
+    fs.writeFileSync('réponses.json', strReponses, 'utf8')
+    res.send("Merci pour cette information !");
+  }  
 });
 
 app.listen(port, function () {
