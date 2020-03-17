@@ -53,3 +53,12 @@ $ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"dema
 $ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"demain\"}" http://localhost:3000/chat
 # retourne "Je ne connais pas demain…"
 ```
+* Demande la ville ou la météo
+```
+$ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"ville\"}" http://localhost:3000/chat
+# retourne "Nous sommes à Paris"
+```
+```
+$ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"météo\"}" http://localhost:3000/chat
+# retourne "Il fait beau"
+```
