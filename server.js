@@ -26,9 +26,7 @@ app.post('/chat', function (req, res){
 
   var msg = decodeURI(json["msg"]);
   var string = 'Message incorrect';
-  res.send("\xE9");
- // res.send("m\351t\351o");
-  /*
+
   switch(msg){
     case "ville":
       string = 'Nous sommes à Paris';
@@ -36,13 +34,13 @@ app.post('/chat', function (req, res){
     case "meteo":
       string = 'Il fait beau';
       break;
-    case "m\351t\351o":
+    case "meteo":
       string = 'ACCENTS';
       break;
   }
 
   res.send(string);
-*/
+
 });
 
 app.listen(port, function () {
