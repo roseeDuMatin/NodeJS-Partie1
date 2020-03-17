@@ -1,13 +1,10 @@
 const express = require('express') ;
 const fs = require('fs');
-//const bodyParser = require('body-parser');
 
 const app = express() ;
 const port = process.env.PORT || 3000;
 
-
 // Middleware
-//app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.get('/', function (req, res) {
@@ -25,42 +22,71 @@ app.get('/hello', function (req, res){
 
 });
 
-app.get('/chat', function(req, res){
-  var data = fs.readFileSync('réponses.json', 'utf8');
-  var json = JSON.parse(data);
-  var msg = json.msg;
-  res.send(msg);
-})
-
 app.post('/chat', function (req, res){
-  var JSONmsg = req.body;
-  console.log(JSONmsg);
+  console.log('Json sent :' + JSON.stringify(req.body));
+  const filename = 'réponses.json';
 
-  var msg = JSONmsg["msg"];
-  var splitMsg = msg.split(" = ");
-  var newMsg = splitMsg.length == 2;
-  var property = splitMsg[0];
-  var value = splitMsg[1];
-  
-  var JSONreponses = fs.readFileSync('réponses.json', 'utf8');
-  var reponses = JSON.parse(JSONreponses);
+  if (req.body.msg === 'ville') {
+    res.send('Nous sommes ) Paris');
 
-  var msgExist = reponses[property] != null;
-  if(msgExist){
-    res.send(property + ': ' + reponses[property]);
+  } else if (req.body.msg === 'météo') {
+    res.send('Il fait beau');
+  } 
+  else {
+    if (/ = /.test(req.body.msg)) {
+      const [ property, value] = req.body.msg.split(" = ");
+      readValuesFromFile(filename, (err, reponses) => {
+        const data = JSON.stringify({
+          ... reponses,
+          [property]: value
+        })
+        fs.writeFile(
+          filename, data, (err) =>{
+            if(err){
+              console.error('Error while saving json', err);
+              res.send("Il y a une erreur lors de l'enregistrement")
+            }else{
+              console.log('File saved : ' + filename);
+              res.send("Merci pour cette information !");
+            }
+          }
+        );
+      });
+    } else{
+      const property = req.body.msg;
+      readValuesFromFile(filename, (err, reponses) =>{
+        if (err) {
+          res.send('Error while reading json', err);
+        } else {
+          const value = reponses[property];
+
+          var valueKnown = value != null;
+          if (valueKnown) {
+            res.send(property + ': ' + value);
+          }else{
+            res.send("Je ne connais pas " + property + "...");
+          }
+        }
+      });
+    }
   }
-  if(!msgExist && !newMsg){
-    res.send('Je ne connais pas ' + property + '...')
-  }
-  if(newMsg){
-    reponses[property] = value;
-    console.log(reponses);
-    var strReponses = JSON.stringify(reponses);
-    fs.writeFileSync('réponses.json', strReponses, 'utf8')
-    res.send("Merci pour cette information !");
-  }  
 });
 
 app.listen(port, function () {
   console.log('Example app listening on port ' + port + ' !');
 });
+
+
+function readValuesFromFile(filename, callback){
+  const reponses = fs.readFile(filename, {encoding: 'utf8'}, (err, data) =>{ 
+    if (err) {
+      console.error('Error while opening json', err);
+      res.send("Il y a une erreur")
+      callback(err);
+    } else {
+      console.log('File openened: ' + filename);
+      const reponses = JSON.parse(data);
+      callback(null, reponses);  
+    }
+  });
+}
