@@ -39,4 +39,5 @@ $ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"vill
 ```
 ```
 $ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"meteo\"}" http://localhost:3000/chat
+# retourne "Il fait beau"
 ```
