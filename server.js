@@ -25,7 +25,7 @@ app.post('/chat', function (req, res){
   var json = req.body;
 
   var msg = decodeURI(json["msg"]);
-  var string = 'Message incorrect';
+  var string = "";
 
   switch(msg){
     case "ville":
@@ -34,7 +34,7 @@ app.post('/chat', function (req, res){
     case "meteo":
       string = 'Il fait beau';
       break;
-    case "meteo":
+    case "météo":
       string = 'ACCENTS';
       break;
   }
