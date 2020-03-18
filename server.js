@@ -1,8 +1,13 @@
 const express = require('express') ;
 const fs = require('fs');
+const util = require('util');
 
 const app = express() ;
 const port = process.env.PORT || 3000;
+
+// Promises
+const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 
 // Middleware
 app.use(express.json());
@@ -35,39 +40,39 @@ app.post('/chat', function (req, res){
   else {
     if (/ = /.test(req.body.msg)) {
       const [ property, value] = req.body.msg.split(" = ");
-      readValuesFromFile(filename, (err, reponses) => {
-        const data = JSON.stringify({
-          ... reponses,
-          [property]: value
+      readValuesFromFile(filename)
+        .catch(err => {
+          res.send('Error while reading : ' + filename);
         })
-        fs.writeFile(
-          filename, data, (err) =>{
-            if(err){
-              console.error('Error while saving json', err);
-              res.send("Il y a une erreur lors de l'enregistrement")
-            }else{
-              console.log('File saved : ' + filename);
-              res.send("Merci pour cette information !");
-            }
-          }
-        );
+        .then(reponses => {
+          const data = JSON.stringify({
+            ... reponses,
+            [property]: value
+        })
+        return writeFile(filename, data);
+      })
+      .then(() => {
+        res.send('Merci pour cette information !');
+      })
+      .catch((err) => {
+          console.error('Error while saving json', err);
+          res.send("Il y a une erreur lors de l'enregistrement")
       });
     } else{
       const property = req.body.msg;
-      readValuesFromFile(filename, (err, reponses) =>{
-        if (err) {
-          res.send('Error while reading json', err);
-        } else {
+      readValuesFromFile(filename)
+        .then((reponses) => {
           const value = reponses[property];
-
-          var valueKnown = value != null;
-          if (valueKnown) {
+          if(value != null){
             res.send(property + ': ' + value);
           }else{
-            res.send("Je ne connais pas " + property + "...");
+            res.send("Je ne connais pas " + property +"...");
           }
-        }
-      });
+
+        })
+        .catch((err) => {
+          res.send('Error while reading : ' + filename);
+        })
     }
   }
 });
@@ -77,16 +82,7 @@ app.listen(port, function () {
 });
 
 
-function readValuesFromFile(filename, callback){
-  const reponses = fs.readFile(filename, {encoding: 'utf8'}, (err, data) =>{ 
-    if (err) {
-      console.error('Error while opening json', err);
-      res.send("Il y a une erreur")
-      callback(err);
-    } else {
-      console.log('File openened: ' + filename);
-      const reponses = JSON.parse(data);
-      callback(null, reponses);  
-    }
-  });
+function readValuesFromFile(filename){
+  return readFile(filename, { encoding: 'utf8' })
+    .then(reponses => JSON.parse(reponses));
 }
