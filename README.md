@@ -12,6 +12,12 @@ Ce dépot contient un serveur web / API en Node.js.
 3. /chat
     - Ce serveur renvoie une réponse en fonction de la valeur de la propriété "msg" passée au format JSON quand on envoie un requête HTTP POST à "/chat".
 
+4. /messages/all
+    - Ce serveur renvoie l'historique des messages du chat quand on envoie une requête HTTP GET à "/messages/all".
+
+5. /messages/last
+    - Ce serveur supprime le dernier échange de l’historique des messages du chat quand on envoie une requête HTTP DELETE à "/messages/last".
+    Le dernier échange correspond au message de l’utilisateur et la réponse du chat-bot. 
 
 ## Installation et execution
 ```
@@ -61,4 +67,25 @@ $ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"vill
 ```
 $ curl -X POST --header "Content-Type: application/json" --data "{\"msg\":\"météo\"}" http://localhost:3000/chat
 # retourne "Il fait beau"
+```
+
+4. /messages/all
+```
+curl -X GET http://localhost:3000/messages/all
+# retourne 
+[
+    { 
+        from: user, 
+        msg: ville
+    },
+    { 
+        from: bot,
+        msg: 'Nous sommes à Paris'
+    }
+]
+```
+
+5. /messages/last
+```
+curl -X DELETE http://localhost:3000/messages/last
 ```
