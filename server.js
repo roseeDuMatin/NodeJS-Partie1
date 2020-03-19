@@ -7,9 +7,9 @@ const assert = require('assert');
 const app = express() ;
 
 const PORT = process.env.PORT || 3000;
-// const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017'; // 'mongodb+srv://dbUser:IhoOCqeQ35YCAiDa@cluster0-7d2ku.azure.mongodb.net/test';
-// const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://dbUser:IhoOCqeQ35YCAiDa@cluster0-7d2ku.azure.mongodb.net/test';
-const MONGODB_URI = 'mongodb+srv://dbUser:IhoOCqeQ35YCAiDa@cluster0-7d2ku.azure.mongodb.net/test';
+// const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://dbUser:IhoOCqeQ35YCAiDa@cluster0-7d2ku.azure.mongodb.net/test';
+// const MONGODB_URI = 'mongodb+srv://dbUser:IhoOCqeQ35YCAiDa@cluster0-7d2ku.azure.mongodb.net/test';
 
 const DATABASE_NAME = 'chat-bot';
 const COLLECTION_NAME = 'messages';
