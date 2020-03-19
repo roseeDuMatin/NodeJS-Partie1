@@ -128,11 +128,16 @@ app.delete('/messages/last', async function(req, res){
 ;(async () => {
   console.log(`Connecting to ${DATABASE_NAME}...`)
   const client = new MongoClient(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  await client.connect()
-  collection = client.db(DATABASE_NAME).collection(COLLECTION_NAME)
-  console.log(`Successfully connected to ${DATABASE_NAME}`)
-  app.listen(PORT, function () {
-    console.log('Example app listening on port ' + PORT)
-  })
+  try{
+    await client.connect()
+    collection = client.db(DATABASE_NAME).collection(COLLECTION_NAME)
+    console.log(`Successfully connected to ${DATABASE_NAME}`)
+    app.listen(PORT, function () {
+      console.log('Example app listening on port ' + PORT)
+    });
+  }
+  catch (err){
+    console.log(err.stack)
+  }
   // await client.close() // should be done when the server is going down
 })()
