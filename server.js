@@ -2,16 +2,21 @@ const express = require('express') ;
 const fs = require('fs');
 const util = require('util');
 const MongoClient = require('mongodb').MongoClient;
+
 const ObjectId = require('mongodb').ObjectID;
 const assert = require('assert');
 const app = express() ;
+
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://dbUser:IhoOCqeQ35YCAiDa@cluster0-7d2ku.azure.mongodb.net/test';//'mongodb://localhost:27017'
 const port = process.env.PORT || 3000;
-const client = new MongoClient('mongodb+srv://' + 'dbUser' + ':' + 'IhoOCqeQ35YCAiDa' + '@cluster0-7d2ku.azure.mongodb.net/test', { useUnifiedTopology: true } ,{ useNewUrlParser: true });
+
 const dbName = 'chat-bot';
 const collectionName = 'messages';
+
 // Promises
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
+
 // Middleware
 app.use(express.json());
 
@@ -68,9 +73,11 @@ app.post('/chat', async function (req, res){
 });
 
 app.get('/messages/all', async function (req, res){
+  const client = new MongoClient(MONGODB_URI, { useUnifiedTopology: true } ,{ useNewUrlParser: true });
   try {
     await client.connect();
-    // console.log('La connexion avec la bdd est ouverte');
+    console.log('La connexion avec la bdd est ouverte');
+
     const db = client.db(dbName);
     const collection = db.collection(collectionName);
     var messages = await collection.find({}).toArray();
@@ -81,16 +88,20 @@ app.get('/messages/all', async function (req, res){
     console.log(err.stack);
     res.send("Erreur avec de connexion à la collection : " + collectionName);
   }
-  // client.close();
-  // console.log('La connexion avec la bdd est fermée');
+    client.close();
+    console.log('La connexion avec la bdd est fermée'); 
 });
 
 app.delete('/messages/last', async function(req, res){
+  const client = new MongoClient(MONGODB_URI, { useUnifiedTopology: true } ,{ useNewUrlParser: true });
   try {
     await client.connect();
+    console.log('La connexion avec la bdd est ouverte');
+
     const db = client.db(dbName);
     const collection = db.collection(collectionName);
     var messages = await collection.find().sort({$natural:-1}).limit(2).toArray();
+    
     var notEmpty = messages.length != 0;
     if(notEmpty){
       var ok = true;
@@ -104,7 +115,13 @@ app.delete('/messages/last', async function(req, res){
     }
   }catch (err) {
     console.log(err.stack);
-  } 
+  }
+  // try{
+  //   await client.close();
+  //   console.log('La connexion avec la bdd est fermée'); 
+  // }catch{
+  //   console.log(err.stack);
+  // }
 });
 
 app.listen(port, function () { console.log('Example app listening on port ' + port + ' !'); });
@@ -115,15 +132,23 @@ async function readValuesFromFile(filename){
 }
 
 async function insertMessage(from, msg){
+  const client = new MongoClient(MONGODB_URI, { useUnifiedTopology: true } ,{ useNewUrlParser: true });
   try {
     await client.connect();
-    // console.log('La connexion avec la bdd est ouverte');
+    console.log('La connexion avec la bdd est ouverte');
+
     const db = client.db(dbName);
     const collection = db.collection(collectionName);
     let doc = { from: from, msg: msg };
     let r = await db.collection(collection.collectionName).insertOne(doc);
     assert.equal(1, r.insertedCount);
   }catch(err){
+    console.log(err.stack);
+  }
+  try{
+    await client.close();
+    console.log('La connexion avec la bdd est fermée'); 
+  }catch{
     console.log(err.stack);
   }
 }
