@@ -2,29 +2,59 @@ const express = require('express') ;
 const fs = require('fs');
 const util = require('util');
 const MongoClient = require('mongodb').MongoClient;
-
-const ObjectId = require('mongodb').ObjectID;
 const assert = require('assert');
+
 const app = express() ;
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://dbUser:IhoOCqeQ35YCAiDa@cluster0-7d2ku.azure.mongodb.net/test';//'mongodb://localhost:27017'
-const port = process.env.PORT || 3000;
-
-const dbName = 'chat-bot';
-const collectionName = 'messages';
+const PORT = process.env.PORT || 3000;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017'; // 'mongodb+srv://dbUser:IhoOCqeQ35YCAiDa@cluster0-7d2ku.azure.mongodb.net/test';
+const DATABASE_NAME = 'chat-bot';
+const COLLECTION_NAME = 'messages';
 
 // Promises
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
+let collection;
 
 // Middleware
 app.use(express.json());
 
+// Fonctions
+async function readValuesFromFile(filename){
+  const reponses = await readFile(filename, { encoding: 'utf8'});
+  return JSON.parse(reponses);
+}
+
+async function insertMessage(from, msg){
+  try {
+    let doc = { from: from, msg: msg };
+    let insert = await collection.insertOne(doc);
+    assert.equal(1, insert.insertedCount);
+  }catch(err){
+    console.log(err.stack);
+  }
+}
+
 app.get('/', function (req, res) { res.send('Hello World!'); });
 
 app.get('/hello', function (req, res){
-  var name = req.query.nom;
-  res.send((name != null && name != '') ? 'Bonjour, ' + name + ' !': 'Quel est votre nom ?');
+  const name = req.query.nom;
+  const nameIsKnown = name != null && name != '';
+  console.log("Hello !");
+  res.send(nameIsKnown ? 'Bonjour, ' + name + ' !': 'Quel est votre nom ?');
+});
+
+app.get('/messages/all', async function (req, res){
+  try {
+    console.log('Query : get all messages');
+    var messages = await collection.find({}).toArray();
+    messages.forEach(message => delete message._id);
+    res.json(messages);
+  }
+  catch (err) {
+    console.log(err.stack);
+    res.send("Erreur avec de connexion à la collection : " + COLLECTION_NAME);
+  }
 });
 
 app.post('/chat', async function (req, res){
@@ -51,7 +81,7 @@ app.post('/chat', async function (req, res){
         msg = 'Merci pour cette information !';
       } catch (err) {
         console.error('Error while saving : ' + filename, err);
-        res.send("Il y a une erreur lors de l'enregistrement")
+        res.send("Il y a une erreur lors de l'enregistrement");
         return;
       }
     } else{
@@ -72,83 +102,34 @@ app.post('/chat', async function (req, res){
   res.send(msg);
 });
 
-app.get('/messages/all', async function (req, res){
-  const client = new MongoClient(MONGODB_URI, { useUnifiedTopology: true } ,{ useNewUrlParser: true });
-  try {
-    await client.connect();
-    console.log('La connexion avec la bdd est ouverte');
-
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-    var messages = await collection.find({}).toArray();
-    messages.forEach(message => delete message._id);
-    res.json(messages);
-  }
-  catch (err) {
-    console.log(err.stack);
-    res.send("Erreur avec de connexion à la collection : " + collectionName);
-  }
-    client.close();
-    console.log('La connexion avec la bdd est fermée'); 
-});
-
 app.delete('/messages/last', async function(req, res){
-  const client = new MongoClient(MONGODB_URI, { useUnifiedTopology: true } ,{ useNewUrlParser: true });
   try {
-    await client.connect();
-    console.log('La connexion avec la bdd est ouverte');
-
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-    var messages = await collection.find().sort({$natural:-1}).limit(2).toArray();
-    
-    var notEmpty = messages.length != 0;
-    if(notEmpty){
-      var ok = true;
-      messages.forEach(message => { 
-        var del = collection.deleteOne(message);
-        var ok = ok && del.deletedCount == 1;
-      });
-      res.send(ok ? "Exchange successfully deleted" : "Sadly there was an error and the exchange has not been deleted :(");
+    const messages = await collection.find().sort({$natural:-1}).limit(2).toArray();
+    const [ botReply, usrMsg ] = messages;
+    if(botReply && usrMsg){
+      var delBot = await collection.deleteOne(botReply);
+      var delUsr = await collection.deleteOne(usrMsg);
+      var delOK = delUsr.deletedCount == 1 && delBot.deletedCount == 1;
+      res.send(delOK ? "Exchange successfully deleted" : "Sadly there was an error and the exchange has not been deleted :(");
+      console.log("Exchange deleted :");
+      console.log(" - " + JSON.stringify(messages[0]));
+      console.log(" - " + JSON.stringify(messages[1]));
     }else{
       res.send("Il n'y a aucun document à supprimer !");
     }
   }catch (err) {
     console.log(err.stack);
   }
-  // try{
-  //   await client.close();
-  //   console.log('La connexion avec la bdd est fermée'); 
-  // }catch{
-  //   console.log(err.stack);
-  // }
 });
 
-app.listen(port, function () { console.log('Example app listening on port ' + port + ' !'); });
-
-async function readValuesFromFile(filename){
-  const reponses = await readFile(filename, { encoding: 'utf8'});
-  return JSON.parse(reponses);
-}
-
-async function insertMessage(from, msg){
-  const client = new MongoClient(MONGODB_URI, { useUnifiedTopology: true } ,{ useNewUrlParser: true });
-  try {
-    await client.connect();
-    console.log('La connexion avec la bdd est ouverte');
-
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-    let doc = { from: from, msg: msg };
-    let r = await db.collection(collection.collectionName).insertOne(doc);
-    assert.equal(1, r.insertedCount);
-  }catch(err){
-    console.log(err.stack);
-  }
-  try{
-    await client.close();
-    console.log('La connexion avec la bdd est fermée'); 
-  }catch{
-    console.log(err.stack);
-  }
-}
+;(async () => {
+  console.log(`Connecting to ${DATABASE_NAME}...`)
+  const client = new MongoClient(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  await client.connect()
+  collection = client.db(DATABASE_NAME).collection(COLLECTION_NAME)
+  console.log(`Successfully connected to ${DATABASE_NAME}`)
+  app.listen(PORT, function () {
+    console.log('Example app listening on port ' + PORT)
+  })
+  // await client.close() // should be done when the server is going down
+})()
